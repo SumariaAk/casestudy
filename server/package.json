@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "aws-sdk": "^2.1399.0",
+    "serverless-stack-output": "^0.2.3"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "serverless-dotenv-plugin": "^6.0.0",
+    "serverless-plugin-include-dependencies": "^5.1.0"
+  },
+  "scripts": {
+    "test": "jest --coverage"
+  }
+}

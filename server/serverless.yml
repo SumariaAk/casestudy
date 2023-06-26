@@ -1,0 +1,114 @@
+service: server
+app: ${env:APP_NAME}  # Placeholder for the name of the application
+org: ${env:ORG_NAME}  # Placeholder for the name of the organization
+useDotenv: true
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage, 'dev'}  # Specifies the deployment stage (default: 'dev')
+  region: ${opt:region, 'us-east-1'}  # Specifies the AWS region (default: 'us-east-1')
+  # iam:
+    # role: arn:aws:iam::${self:custom.accountID}:role/testroleaccess
+  iamRoleStatements:  # Defines IAM role permissions required by the service
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${self:provider.region}:${self:custom.accountID}:table/${self:custom.dynamoDbTableName}"  # ARN of the DynamoDB table
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:GetObject
+        - s3:ListBucket
+      Resource:
+        - "arn:aws:s3:::${self:custom.sourceS3BucketName}/*"  # ARN of the source S3 bucket
+        - "arn:aws:s3:::${self:custom.targetS3BucketName}/*"  # ARN of the target S3 bucket
+
+custom:
+  dynamoDbTableName: ${env:DYNAMODB_TABLE_NAME}  # Placeholder for the name of the DynamoDB table
+  sourceS3BucketName: ${env:SOURCE_S3_BUCKET_NAME}  # Placeholder for the name of the source S3 bucket
+  targetS3BucketName: ${env:TARGET_S3_BUCKET_NAME}  # Placeholder for the name of the target S3 bucket
+  accountID: ${env:ACCOUNT_ID}  # Placeholder for the AWS account ID
+  output:
+    handler: scripts/output.handler  # Specifies the handler function for the output
+    file: output/stack.json  # Specifies the output file format (e.g., JSON)
+
+functions:
+  uploadTextFile:  # Defines a function for uploading a text file to S3
+    handler: backend/uploadTextFile.handler  # Specifies the handler function for the uploadTextFile function
+    events:
+      - s3:
+          bucket: ${self:custom.sourceS3BucketName}  # Specifies the source S3 bucket for the event trigger
+          event: s3:ObjectCreated:*  # Triggers the function when a new object is created in the bucket
+          rules:
+            - suffix: .txt  # Specifies that the function should only be triggered for files with the .txt suffix
+    environment:
+      DYNAMODB_TABLE_NAME: ${self:custom.dynamoDbTableName}  # Sets the DynamoDB table name in the function's environment variables
+
+  generateCSV:  # Defines a function for generating a CSV file
+    handler: backend/generateCSV.handler  # Specifies the handler function for the generateCSV function
+    events:
+      - http:
+          path: /getcsv  # Specifies the HTTP endpoint for invoking the function
+          method: get  # Specifies that the function should be invoked via a GET request
+          cors: true  # Enables Cross-Origin Resource Sharing (CORS) for the endpoint
+    environment:
+      DYNAMODB_TABLE_NAME: ${self:custom.dynamoDbTableName}  # Sets the DynamoDB table name in the function's environment variables
+      TARGET_S3_BUCKET_NAME: ${self:custom.targetS3BucketName}  # Sets the target S3 bucket name in the function's environment variables
+
+  fetchDataFromDynamoDB:  # Defines a function for fetching data from DynamoDB
+    handler: backend/fetchDataFromDynamoDB.handler  # Specifies the handler function for the fetchDataFromDynamoDB function
+    events:
+      - http:
+          path: /fetchdata  # Specifies the HTTP endpoint for invoking the function
+          method: get  # Specifies that the function should be invoked via a GET request
+          cors: true  # Enables Cross-Origin Resource Sharing (CORS) for the endpoint
+    environment:
+      DYNAMODB_TABLE_NAME: ${self:custom.dynamoDbTableName}  # Sets the DynamoDB table name in the function's environment variables
+
+# Plugin
+plugins:
+  - serverless-dotenv-plugin 
+  - serverless-stack-output 
+
+resources:
+  Resources:
+    DynamoDBTable:  # Defines the AWS DynamoDB table resource
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoDbTableName}  # Specifies the name of the DynamoDB table
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+    TargetS3Bucket:  # Defines the AWS S3 bucket resource
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.targetS3BucketName}  # Specifies the name of the S3 bucket
+        VersioningConfiguration:
+          Status: Suspended
+        BucketEncryption:
+          ServerSideEncryptionConfiguration:
+            - ServerSideEncryptionByDefault:
+                SSEAlgorithm: AES256
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        LifecycleConfiguration:
+          Rules:
+            - Id: TransitionToGlacier
+              Status: Enabled
+              Transitions:
+                - TransitionInDays: 30
+                  StorageClass: GLACIER
