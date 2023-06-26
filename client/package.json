@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "aws-sdk": "^2.1399.0",
+    "serverless-finch": "^4.0.3",
+    "serverless-stack-output": "^0.2.3"
+  },
+  "devDependencies": {
+    "serverless-build-client": "^2.5.0",
+    "serverless-dotenv-plugin": "^6.0.0",
+    "serverless-plugin-include-dependencies": "^5.1.0"
+  }
+}

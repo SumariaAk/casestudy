@@ -1,0 +1,45 @@
+app: ${env:APP_NAME}  # Placeholder for the name of the application
+org: ${env:ORG_NAME}  # Placeholder for the name of the organization
+service: client  # Name of the service
+useDotenv: true  # Enables loading environment variables from a .env file
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage, 'dev'}  # Specifies the deployment stage (default: 'dev')
+  region: ${opt:region, 'us-east-1'}  # Specifies the AWS region (default: 'us-east-1')
+  environment:
+    REACT_APP_BACKEND_ENDPOINT: ${cf:server-${self:provider.stage}.ServiceEndpoint}  # Sets the backend endpoint for the React app
+
+custom:
+  dynamoDbTableName: ${env:DYNAMODB_TABLE_NAME}  # Placeholder for the name of the DynamoDB table
+  hostS3BucketName: ${env:HOST_S3_BUCKET_NAME}  # Placeholder for the name of the host S3 bucket
+  accountID: ${env:ACCOUNT_ID}  # Placeholder for the AWS account ID
+  buildClient:
+    packager: npm
+    command: run build
+    cwd: my-app
+    verbose: true  # Enables verbose output during the build process
+  client:
+    bucketName: ${self:custom.hostS3BucketName}  # Specifies the name of the host S3 bucket for the client
+    distributionFolder: my-app/build  # Specifies the folder containing the built client files
+  output:
+    handler: scripts/output.handler  # Specifies the handler function for the output
+    file: output/stack.json  # Specifies the output file format (e.g., JSON)
+
+# functions:
+#   hello:
+#     handler: handler.hello  # Specifies the handler function for the 'hello' function
+#     events:
+#     - httpApi:
+#         path: /users/create  # Specifies the HTTP endpoint for invoking the function
+#         method: get  # Specifies that the function should be invoked via a GET request
+
+plugins:
+  - serverless-finch  # Plugin for creating serverless Single Page Applications (SPAs) with Finch.js
+  - serverless-dotenv-plugin  # Plugin for loading environment variables from a .env file
+  - serverless-build-client  # Plugin for building and deploying client applications
+  - serverless-stack-output  # Plugin for generating stack outputs
+
