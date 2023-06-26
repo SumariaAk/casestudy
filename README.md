@@ -12,6 +12,8 @@ This case study is an event-driven architecture that reads a text file and store
   - [Backend](#backend)
   - [API Documentation](#api-documentation)
   - [GitHub Actions](#github-actions)
+    - [Secrets](#secrets)
+    - [Variables](#variables)
   - [Installation and Usage](#installation-and-usage)
   - [Unit Testing](#unit-testing)
   - [License](#license)
@@ -53,36 +55,100 @@ The API documentation, including the available endpoints and their descriptions,
 ## GitHub Actions
 
 A GitHub Actions workflow has been set up to trigger on every push to the main branch. This workflow automatically builds and deploys the application, runs the unit tests, and generates a code coverage report.
-This actions requires the following secrets
-1. AWS_ACCOUNT_ID - The AWS account ID where you want to host the project.
-2. SERVERLESS_ACCESS_KEY - Serverless framework access key. 
+
+### Secrets
+1. The AWS account ID where you want to host the project.
+
+```
+AWS_ACCOUNT_ID
+```
+
+2. Serverless framework access key from [SERVERLESS_ACCESS_KEY](https://www.serverless.com/framework/docs/guides/cicd/running-in-your-own-cicd)
+
+```
+SERVERLESS_ACCESS_KEY
+```
+
+### Variables
+Serverless framework application name
+```
+APP_NAME
+```
+Serverless framework organization name 
+```
+ORG_NAME
+```
+DynamoDb table name
+```
+DYNAMODB_TABLE_NAME
+```
+S3 Bucket name where text file is dropped
+```
+SOURCE_S3_BUCKET_NAME
+```
+S3 Bucket name where csv file is stored
+```
+TARGET_S3_BUCKET_NAME
+```
+S3 Bucket name where frontend web app is deployed
+```
+HOST_S3_BUCKET_NAME
+```
+AWS account ID
+```
+ACCOUNT_ID
+```
 
 ## Installation and Usage
 
 To set up the project locally, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/SumariaAk/serverlessproject.git`
-2. Install dependencies in client, client/my-app and server folders
-3. Create .env files in server and client folder with below variables
-4. 
-   server/.env
+1. Clone the repository: 
+
+```
+`git clone https://github.com/SumariaAk/.git`
+```
+1. Install dependencies in client, client/my-app and server folders
+2. Create .env files in server and client folder with below variables
+
+server/.env
+
+```
         APP_NAME={serverless framework application name} 
         ORG_NAME={serverless framework organization name}
         DYNAMODB_TABLE_NAME={AWS DynamoDB table name}
         SOURCE_S3_BUCKET_NAME={AWS S3 source name}
         TARGET_S3_BUCKET_NAME={AWS S3 target name}
         ACCOUNT_ID={AWS account ID}
+```
+client/.env
 
-    client/.env
+```
         APP_NAME={serverless framework application name}
         ORG_NAME={serverless framework organization name}
         DYNAMODB_TABLE_NAME={AWS DynamoDB table name}
         HOST_S3_BUCKET_NAME={AWS S3 host name}
         ACCOUNT_ID={AWS account ID}
-        
-5. Run 'serverless deploy'  in server folder to deploy the backend
-6. Run 'serverless client build' in client folder to build the client
-7. Run 'serverless client deploy' in client folder to deploy the client
+```
+
+3. Run below command in server folder to deploy the backend
+
+```
+serverless deploy
+```
+
+4. Run below command in client folder to build the client
+
+```
+serverless client build
+```
+
+5. Run below command in client folder to deploy the client
+
+```
+serverless client deploy
+```
+
 
 ## Unit Testing
 
