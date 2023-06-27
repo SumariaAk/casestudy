@@ -1,0 +1,99 @@
+name: Deploy master branch
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      # Step 1: Checkout code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js environment
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # Step 3: Install server dependencies
+      - name: Install dependencies in server configuration
+        run: |
+          cd server/
+          npm install -g serverless@latest
+          npm install
+
+      # Step 4: Create .env file in server
+      - name: Create .env file in server
+        run: |
+          echo "APP_NAME=$APP_NAME" >> server/.env
+          echo "ORG_NAME=$ORG_NAME" >> server/.env
+          echo "DYNAMODB_TABLE_NAME=$DYNAMODB_TABLE_NAME" >> server/.env
+          echo "SOURCE_S3_BUCKET_NAME=$SOURCE_S3_BUCKET_NAME" >> server/.env
+          echo "TARGET_S3_BUCKET_NAME=$TARGET_S3_BUCKET_NAME" >> server/.env
+          echo "ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> server/.env
+        env:
+          APP_NAME: ${{ vars.APP_NAME }}
+          ORG_NAME: ${{ vars.ORG_NAME }}
+          DYNAMODB_TABLE_NAME: ${{ vars.DYNAMODB_TABLE_NAME }}
+          SOURCE_S3_BUCKET_NAME: ${{ vars.SOURCE_S3_BUCKET_NAME }}
+          TARGET_S3_BUCKET_NAME: ${{ vars.TARGET_S3_BUCKET_NAME }}
+
+      # Step 5: Run unit tests in server
+      - name: Run unit tests in server
+        run: |
+          cd server/
+          npm test
+
+      # Step 6: Deploy server using serverless framework
+      - name: Deploy server
+        run: |
+          cd server/
+          npx serverless deploy
+        env:
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+
+      # Step 7: Install client dependencies
+      - name: Install dependencies in client
+        run: |
+          cd client/
+          npm install -g serverless
+          npm install --legacy-peer-deps
+
+      # Step 8: Create .env file in client
+      - name: Create .env file in client
+        run: |
+          echo "APP_NAME=$APP_NAME" >> client/.env
+          echo "ORG_NAME=$ORG_NAME" >> client/.env
+          echo "DYNAMODB_TABLE_NAME=$DYNAMODB_TABLE_NAME" >> client/.env
+          echo "HOST_S3_BUCKET_NAME=$HOST_S3_BUCKET_NAME" >> client/.env
+          echo "ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> client/.env
+        env:
+          APP_NAME: ${{ vars.APP_NAME }}
+          ORG_NAME: ${{ vars.ORG_NAME }}
+          DYNAMODB_TABLE_NAME: ${{ vars.DYNAMODB_TABLE_NAME }}
+          HOST_S3_BUCKET_NAME: ${{ vars.HOST_S3_BUCKET_NAME }}
+
+      # Step 9: Install client app dependencies
+      - name: Install dependencies in client my-app
+        run: |
+          cd client/my-app/
+          npm install --legacy-peer-deps
+          cd ..
+                  
+      # Step 10: Build and deploy client using serverless framework
+      - name: Build and deploy client
+        run: |
+          cd client/
+          npx serverless client build
+          npx serverless client deploy --no-confirm
+        env:
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
