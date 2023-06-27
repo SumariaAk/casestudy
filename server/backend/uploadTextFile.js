@@ -7,7 +7,6 @@ exports.handler = async (event) => {
     const s3Object = event.Records[0].s3;
     const bucketName = s3Object.bucket.name;
     const objectKey = s3Object.object.key;
-    console.log('after fetching s3 objects from records');
 
     // Download the text file from S3
     const textFileContent = await downloadTextFile(bucketName, objectKey);
@@ -16,10 +15,7 @@ exports.handler = async (event) => {
     const dataArray = parseTextFileContent(textFileContent);
 
     // Save the data to DynamoDB
-    console.log('before put into db');
     await Promise.all(dataArray.map((data) => saveDataToDynamoDB(data)));
-    console.log('after put into db akash 200');
-
     return { statusCode: 200, body: 'Data saved to DynamoDB' };
   } catch (error) {
     return { statusCode: 500, body: 'Error saving data to DynamoDB' };
@@ -50,7 +46,6 @@ async function saveDataToDynamoDB(data) {
 
 // Parse the text file content and extract data into an array of objects
 function parseTextFileContent(textFileContent) {
-  console.log('parsing function start');
   const lines = textFileContent.trim().split('\n');
   const headers = lines.shift().split('\t');
 

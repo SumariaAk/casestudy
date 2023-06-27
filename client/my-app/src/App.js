@@ -104,7 +104,6 @@ function App() {
       const GBASE_BACKEND_URL = process.env.REACT_APP_BACKEND_ENDPOINT;
       const GET_DATA_URI = '/getcsv';
       const FINAL_GET_BACKEND_URL = GBASE_BACKEND_URL + GET_DATA_URI;
-      console.log(GBASE_BACKEND_URL + ' ' + GET_DATA_URI + ' ' + FINAL_GET_BACKEND_URL);
       const response = await axios.get(FINAL_GET_BACKEND_URL);
       const temp = response.data;
       setDownloadUrl(temp); // Update the download URL state with the fetched URL
