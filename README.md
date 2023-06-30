@@ -1,10 +1,10 @@
-# Case study
+# Case Study - 3006 
 
 This case study is an event-driven architecture that reads a text file and stores its contents in a document database. The data is then displayed on the frontend, and upon user request, it can be converted to CSV format and delivered as a downloadable URL.
 
 ## Table of Contents
 
-- [Case study](#case-study)
+- [Case Study - 3006](#case-study---3006)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Architecture Overview](#architecture-overview)
